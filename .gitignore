@@ -1,0 +1,9 @@
+.idea/
+__pycache__/
+*.pyc
+girgit.egg-info/
+build/
+dist/
+test_repo/
+scratch/
+test_girgit/
