@@ -8,6 +8,7 @@ from typing import Any
 from . import data
 from . import base
 from . import diff
+from . import remote
 
 def print_edu(msg: str) -> None:
     """Print educational internals information in yellow."""
@@ -30,6 +31,23 @@ def parse_args() -> argparse.Namespace:
 
     init_parser = subparser.add_parser("init", help="Initialize a new repository")
     init_parser.set_defaults(func=init)
+
+    # Cloud Networking Commands
+    remote_parser = subparser.add_parser("remote", help="Manage set of tracked repositories")
+    remote_parser.add_argument("action", choices=["add"])
+    remote_parser.add_argument("name")
+    remote_parser.add_argument("url")
+    remote_parser.set_defaults(func=remote_cmd)
+
+    push_parser = subparser.add_parser("push", help="Update remote refs along with associated objects")
+    push_parser.add_argument("remote")
+    push_parser.add_argument("branch")
+    push_parser.set_defaults(func=push_cmd)
+
+    clone_parser = subparser.add_parser("clone", help="Clone a repository into a new directory")
+    clone_parser.add_argument("url")
+    clone_parser.add_argument("directory")
+    clone_parser.set_defaults(func=clone_cmd)
 
     hash_parser = subparser.add_parser("hash-object", help="Hash a file and store it")
     hash_parser.add_argument("file")
@@ -226,6 +244,17 @@ def show(args: argparse.Namespace) -> None:
     print_edu(f"Running Myers diff algorithm on tree differences...")
     result = diff.diff_tree(base.get_tree(parent_tree), base.get_tree(commit_obj.tree))
     print(result)
+
+def remote_cmd(args: argparse.Namespace) -> None:
+    if args.action == "add":
+        remote.add_remote(args.name, args.url)
+        print_success(f"Added remote '{args.name}' pointing to {args.url}")
+
+def push_cmd(args: argparse.Namespace) -> None:
+    remote.push(args.remote, args.branch)
+
+def clone_cmd(args: argparse.Namespace) -> None:
+    remote.clone(args.url, args.directory)
 
 def main() -> None:
     os.system('') # Enables ANSI color parsing on Windows terminals

@@ -118,14 +118,15 @@ def get_commit(oid: str) -> Commit:
     message = '\n'.join(lines)
     return Commit(tree=tree, parent=parent, message=message)
 
-def checkout(name: str) -> None:
+def checkout(name: str, force: bool = False) -> None:
     """Checkout a commit or branch to the working directory."""
-    HEAD = data.get_ref('HEAD').value
-    if HEAD:
-        head_commit = get_commit(HEAD)
-        current_tree = write_tree()
-        if current_tree != head_commit.tree:
-            raise RuntimeError("You have uncommitted changes. Please commit them before checking out.")
+    if not force:
+        HEAD = data.get_ref('HEAD').value
+        if HEAD:
+            head_commit = get_commit(HEAD)
+            current_tree = write_tree()
+            if current_tree != head_commit.tree:
+                raise RuntimeError("You have uncommitted changes. Please commit them before checking out.")
 
     oid = get_oid(name)
     commit_obj = get_commit(oid)
@@ -135,7 +136,7 @@ def checkout(name: str) -> None:
         HEAD_ref = data.RefValue(symbolic=True, value=f'refs/heads/{name}')
     else:
         HEAD_ref = data.RefValue(symbolic=False, value=oid)
-
+        
     data.update_ref('HEAD', HEAD_ref, deref=False)
 
 def is_branch(name: str) -> bool:

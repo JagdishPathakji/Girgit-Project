@@ -1,9 +1,13 @@
 README.md
 setup.py
+girgit/Edit_Wrapper.py
+girgit/Myers.py
 girgit/__init__.py
 girgit/base.py
 girgit/cli.py
 girgit/data.py
+girgit/diff.py
+girgit/remote.py
 girgit.egg-info/PKG-INFO
 girgit.egg-info/SOURCES.txt
 girgit.egg-info/dependency_links.txt
