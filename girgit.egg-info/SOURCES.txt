@@ -12,4 +12,5 @@ girgit.egg-info/PKG-INFO
 girgit.egg-info/SOURCES.txt
 girgit.egg-info/dependency_links.txt
 girgit.egg-info/entry_points.txt
+girgit.egg-info/requires.txt
 girgit.egg-info/top_level.txt

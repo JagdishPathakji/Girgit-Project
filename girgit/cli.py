@@ -3,6 +3,7 @@ import os
 import sys
 import textwrap
 import subprocess
+import shutil
 from typing import Any
 
 from . import data
@@ -159,32 +160,81 @@ def tag(args: argparse.Namespace) -> None:
     print_edu(f"Created reference .girgit/refs/tags/{args.name} pointing to {args.oid[:10]}")
     print_success(f"Tagged commit {args.oid[:10]} as {args.name}")
 
-def k(args: argparse.Namespace) -> None: 
-    print_edu("Generating graphviz dot string from commit DAG...")
+def k(args: argparse.Namespace) -> None:
+    # Check whether Graphviz is installed
+    if shutil.which("dot") is None:
+        print_err(
+            "Graphviz 'dot' command not found.\n"
+            "Please install Graphviz to use 'girgit k'."
+        )
+        return
+
+    print_edu("Generating Graphviz DOT string from commit DAG...")
+
     dot = "digraph commits{\n"
     oids = set()
-    for ref_name, ref in data.iter_refs(deref=False): 
+
+    # Add refs as starting points
+    for ref_name, ref in data.iter_refs(deref=False):
         dot += f'"{ref_name}" [shape=note]\n'
         dot += f'"{ref_name}" -> "{ref.value}"\n'
+
         if not ref.symbolic:
             oids.add(ref.value)
-    for oid in base.iter_commits_and_parents(oids): 
+
+    # Add commits and their parent edges
+    for oid in base.iter_commits_and_parents(oids):
         commit_obj = base.get_commit(oid)
-        dot += f'"{oid}" [shape=box label="{oid[:10]}..." style=filled]\n'
+
+        dot += (
+            f'"{oid}" '
+            f'[shape=box label="{oid[:10]}..." style=filled]\n'
+        )
+
         if commit_obj.parent:
             dot += f'"{oid}" -> "{commit_obj.parent}"\n'
 
     dot += "}"
-    print_edu("Executing dot command to render PDF...")
+
+    print_edu("Rendering commit graph...")
+
     try:
+        # Render DOT -> PDF
         subprocess.run(
-            'dot -Tpdf | open -f -a Preview',
-            shell=True,
+            ["dot", "-Tpdf", "-o", "girgit_graph.pdf"],
             input=dot,
-            text=True
+            text=True,
+            check=True,
         )
-    except FileNotFoundError:
-        print_err("Graphviz 'dot' command not found. Please install it to use 'girgit k'.")
+
+    except subprocess.CalledProcessError:
+        print_err("Graphviz failed to render the commit graph.")
+        return
+
+    print_edu("Opening commit graph...")
+
+    # Open PDF using the platform's default application
+    try:
+        if sys.platform == "darwin":
+            # macOS
+            subprocess.run(["open", "girgit_graph.pdf"], check=True)
+
+        elif sys.platform == "win32":
+            # Windows
+            os.startfile("girgit_graph.pdf")
+
+        else:
+            # Linux and other Unix-like systems
+            subprocess.run(
+                ["xdg-open", "girgit_graph.pdf"],
+                check=True,
+            )
+
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        print_err(
+            "Could not open the generated PDF automatically.\n"
+            "The graph was saved as 'girgit_graph.pdf'."
+        )
 
 def branch(args: argparse.Namespace) -> None:
     if args.delete:
