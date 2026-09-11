@@ -6,7 +6,7 @@ import collections
 from typing import Iterator, Dict, Tuple, Optional, Set
 from . import data
 
-Commit = collections.namedtuple('Commit', ['tree', 'parent', 'message'])
+Commit = collections.namedtuple('Commit', ['tree', 'parent', 'message', 'parents', 'author'], defaults=[[], None])
 
 def write_tree(directory: str = ".") -> str:
     """Recursively hash files in a directory and return the root tree OID."""
@@ -99,24 +99,35 @@ def commit(message: str) -> str:
 def get_commit(oid: str) -> Commit:
     """Retrieve and parse a commit object."""
     parent = None
+    parents = []
     tree = None
+    author = None
     commit_data = data.get_object(oid, 'commit').decode()
     lines = iter(commit_data.splitlines())
 
     for line in itertools.takewhile(operator.truth, lines):
-        key, value = line.split(' ', 1)
+        if not line:
+            break
+        parts = line.split(' ', 1)
+        key = parts[0]
+        value = parts[1] if len(parts) > 1 else ''
         if key == 'tree':
             tree = value
         elif key == 'parent':
-            parent = value
+            if not parent:
+                parent = value
+            parents.append(value)
+        elif key == 'author':
+            author = value
         else:
-            raise ValueError(f'Unknown Field {key} in commit {oid}')
+            # Gracefully ignore unknown headers instead of crashing
+            pass
     
     if not tree:
         raise ValueError(f'Commit {oid} is missing a tree reference')
 
     message = '\n'.join(lines)
-    return Commit(tree=tree, parent=parent, message=message)
+    return Commit(tree=tree, parent=parent, message=message, parents=parents, author=author)
 
 def checkout(name: str, force: bool = False) -> None:
     """Checkout a commit or branch to the working directory."""
@@ -186,7 +197,10 @@ def iter_commits_and_parents(oids: Set[str]) -> Iterator[str]:
         visited.add(oid)
         yield oid
         commit_obj = get_commit(oid)
-        oids_queue.appendleft(commit_obj.parent)
+        parent_list = commit_obj.parents if (hasattr(commit_obj, 'parents') and commit_obj.parents) else ([commit_obj.parent] if commit_obj.parent else [])
+        for p in parent_list:
+            if p and p not in visited:
+                oids_queue.append(p)
 
 def create_branch(name: str, oid: str) -> None:
     """Create a new branch reference."""

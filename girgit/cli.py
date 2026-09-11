@@ -226,6 +226,8 @@ def reset(args: argparse.Namespace) -> None:
 def _print_commit(oid: str, commit_obj: base.Commit, refs: list = None) -> None: 
     refs_str = f" \033[93m({','.join(refs)})\033[0m" if refs else ""
     print(f'\033[94mcommit : {oid}\033[0m{refs_str}') 
+    if getattr(commit_obj, 'author', None):
+        print(f'Author : {commit_obj.author}')
     print(textwrap.indent(commit_obj.message, '      '))
     print('')
 
