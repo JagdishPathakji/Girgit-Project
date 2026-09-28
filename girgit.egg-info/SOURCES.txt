@@ -3,6 +3,7 @@ setup.py
 girgit/Edit_Wrapper.py
 girgit/Myers.py
 girgit/__init__.py
+girgit/auth.py
 girgit/base.py
 girgit/cli.py
 girgit/data.py

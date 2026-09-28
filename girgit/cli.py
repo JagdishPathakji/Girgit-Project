@@ -9,6 +9,7 @@ from . import data
 from . import base
 from . import diff
 from . import remote
+from . import auth
 
 def print_edu(msg: str) -> None:
     """Print educational internals information in yellow."""
@@ -31,6 +32,13 @@ def parse_args() -> argparse.Namespace:
 
     init_parser = subparser.add_parser("init", help="Initialize a new repository")
     init_parser.set_defaults(func=init)
+
+    # Auth commands
+    login_parser = subparser.add_parser("login", help="Log in to Girgit")
+    login_parser.set_defaults(func=login_cmd)
+
+    logout_parser = subparser.add_parser("logout", help="Log out from Girgit")
+    logout_parser.set_defaults(func=logout_cmd)
 
     # Cloud Networking Commands
     remote_parser = subparser.add_parser("remote", help="Manage set of tracked repositories")
@@ -257,6 +265,12 @@ def push_cmd(args: argparse.Namespace) -> None:
 
 def clone_cmd(args: argparse.Namespace) -> None:
     remote.clone(args.url, args.directory)
+
+def login_cmd(args: argparse.Namespace) -> None:
+    auth.login()
+
+def logout_cmd(args: argparse.Namespace) -> None:
+    auth.logout()
 
 def main() -> None:
     os.system('') # Enables ANSI color parsing on Windows terminals
