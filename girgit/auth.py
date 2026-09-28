@@ -14,8 +14,8 @@ def print_err(msg: str) -> None:
     print(f"\033[91mError: {msg}\033[0m")
 
 AUTH_FILE = os.path.expanduser('~/.girgit_credentials')
-# Use localhost for development, can be updated for production
-API_BASE = 'http://localhost:3000'
+# Connected to live environment
+API_BASE = 'https://version-control-system-mebn.onrender.com'
 
 def login() -> None:
     """Prompt user for credentials and log in to the backend to get a JWT."""
