@@ -184,15 +184,34 @@ def k(args: argparse.Namespace) -> None:
 
     dot += "}"
     print_edu("Executing dot command to render PDF...")
+    
+    output_path = os.path.join(data.GIT_DIR, "graph.pdf")
     try:
-        subprocess.run(
-            'dot -Tpdf | open -f -a Preview',
-            shell=True,
+        # Run dot to generate PDF
+        process = subprocess.run(
+            ['dot', '-Tpdf', '-o', output_path],
             input=dot,
-            text=True
+            text=True,
+            capture_output=True
         )
+        
+        if process.returncode != 0:
+            print_err(f"Graphviz failed: {process.stderr}")
+            return
+            
+        print_success(f"Graph generated at {output_path}")
+        
+        # Open the PDF cross-platform
+        if sys.platform == "win32":
+            os.startfile(output_path)
+        elif sys.platform == "darwin":
+            subprocess.run(['open', output_path])
+        else:
+            subprocess.run(['xdg-open', output_path])
+            
     except FileNotFoundError:
-        print_err("Graphviz 'dot' command not found. Please install it to use 'girgit k'.")
+        print_err("Graphviz 'dot' command not found. Please install Graphviz and add it to your PATH to use 'girgit k'.")
+
 
 def branch(args: argparse.Namespace) -> None:
     if args.delete:
