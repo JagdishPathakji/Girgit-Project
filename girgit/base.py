@@ -239,5 +239,7 @@ def iter_branch_name() -> Iterator[str]:
         yield os.path.relpath(ref_name, 'refs/heads/').replace('\\', '/')
 
 def reset(oid: str) -> None:
-    """Reset HEAD to a specific commit."""
+    """Reset HEAD and working directory to a specific commit."""
+    commit_obj = get_commit(oid)
     data.update_ref('HEAD', data.RefValue(symbolic=False, value=oid))
+    read_tree(commit_obj.tree)
