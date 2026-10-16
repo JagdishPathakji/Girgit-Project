@@ -57,6 +57,10 @@ def parse_args() -> argparse.Namespace:
     clone_parser.add_argument("directory")
     clone_parser.set_defaults(func=clone_cmd)
 
+    collab_parser = subparser.add_parser("contributors", help="List contributors for a repository")
+    collab_parser.add_argument("remote", nargs='?', default="origin", help="Remote name or owner/repo (default: origin)")
+    collab_parser.set_defaults(func=contributors_cmd)
+
     hash_parser = subparser.add_parser("hash-object", help="Hash a file and store it")
     hash_parser.add_argument("file")
     hash_parser.set_defaults(func=hash_object)
@@ -284,6 +288,9 @@ def push_cmd(args: argparse.Namespace) -> None:
 
 def clone_cmd(args: argparse.Namespace) -> None:
     remote.clone(args.url, args.directory)
+
+def contributors_cmd(args: argparse.Namespace) -> None:
+    remote.list_contributors(args.remote)
 
 def login_cmd(args: argparse.Namespace) -> None:
     auth.login()

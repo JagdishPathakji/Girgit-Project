@@ -149,3 +149,54 @@ def clone(repo_name: str, directory: str) -> None:
         print(f"\033[91mError: Could not connect to the server at {API_BASE}\033[0m")
     except Exception as e:
         print(f"\033[91mError during clone: {str(e)}\033[0m")
+
+
+def list_contributors(remote_name: str = 'origin') -> None:
+    try:
+        repo = get_remote(remote_name)
+    except Exception:
+        repo = remote_name
+
+    if '/' not in repo:
+        print(f"\033[91mError: Invalid remote '{remote_name}'. Expected format: username/repo-name\033[0m")
+        return
+
+    owner, repo_name = repo.split('/')
+    print(f"\033[93m[Internals]\033[0m Fetching contributors for {owner}/{repo_name}...")
+
+    headers = {}
+    token = get_token()
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+
+    try:
+        response = requests.get(f"{API_BASE}/repo/{owner}/{repo_name}/contributors", headers=headers)
+        if response.status_code != 200:
+            resp_data = response.json()
+            print(f"\033[91mError: {resp_data.get('message', 'Failed to fetch contributors')}\033[0m")
+            return
+
+        data_payload = response.json()
+        owner_data = data_payload.get("owner", {})
+        contributors = data_payload.get("contributors", [])
+        pending = data_payload.get("pendingContributors", [])
+
+        print(f"\n\033[96m=== Repository Contributors: {owner}/{repo_name} ===\033[0m")
+        print(f"  \033[93mOwner:\033[0m @{owner_data.get('username')} ({owner_data.get('email', '')})")
+        print(f"  \033[92mActive Contributors ({len(contributors)}):\033[0m")
+        if contributors:
+            for c in contributors:
+                print(f"    - @{c.get('username')} [{c.get('role', 'contributor')}] ({c.get('email', '')})")
+        else:
+            print("    (No other contributors yet)")
+
+        if pending:
+            print(f"  \033[93mPending Invitations ({len(pending)}):\033[0m")
+            for p in pending:
+                print(f"    - @{p.get('username')} [Invitation Pending]")
+        print()
+    except requests.exceptions.ConnectionError:
+        print(f"\033[91mError: Could not connect to the server at {API_BASE}\033[0m")
+    except Exception as e:
+        print(f"\033[91mError fetching contributors: {str(e)}\033[0m")
+
